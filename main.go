@@ -15,10 +15,14 @@ func (g *Grid) initGrid(rows, cols int) {
 }
 
 // makeAlive the cell in (row, col) and make it live.
-func (g Grid) makeAlive(row, col int)
+func (g Grid) makeAlive(row, col int) {
+	g[row][col] = true
+}
 
 // kill the cell in (row, col)
-func (g Grid) kill(row, col int)
+func (g Grid) kill(row, col int) {
+	g[row][col] = false
+}
 
 // countLiveNeighbors counts the number of neighbors
 // the cell in (row, col) has.
