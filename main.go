@@ -1,86 +1,89 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
+
+const ROWS int = 10
+const COLS int = 10
+const MAX_GENERATION int = 10
 
 type Grid [][]bool
 
-const ROWS int = 3
-const COLS int = 3
-const MAX_GENERATION int = 10
-
-var grid Grid
-var tempGrid Grid
-
 // initGrid initialises the grid.
-func (g *Grid) initGrid(rows, cols int) {
-	*g = make([][]bool, rows)
+func initGrid(rows, cols int) *Grid {
+	g := make(Grid, rows)
 
 	for r := 0; r < rows; r++ {
-		(*g)[r] = make([]bool, cols)
+		g[r] = make([]bool, cols)
 	}
+	return &g
 }
 
-// makeAlive the cell in (row, col) and make it live.
-func (g Grid) makeAlive(row, col int) {
-	g[row][col] = true
+// makeAlive the cell in (row, col).
+func (g *Grid) makeAlive(row, col int) {
+	grid := *g
+	grid[row][col] = true
 }
 
-// kill the cell in (row, col)
-func (g Grid) kill(row, col int) {
-	g[row][col] = false
+// kill the cell in (row, col).
+func (g *Grid) kill(row, col int) {
+	grid := *g
+	grid[row][col] = false
 }
 
 // liveNeighbors counts the number of neighbors
 // the cell in (row, col) has.
-func (g Grid) liveNeighbors(row, col int) int {
+func (g *Grid) liveNeighbors(row, col int) int {
+	grid := *g
 	count := 0
 	// check north west
-	if row > 0 && col > 0 && g[row-1][col-1] == true {
+	if row > 0 && col > 0 && grid[row-1][col-1] == true {
 		count++
 	}
 
 	// check north neighbor
-	if row > 0 && g[row-1][col] == true {
+	if row > 0 && grid[row-1][col] == true {
 		count++
 	}
 
 	// check north east
-	if row > 0 && col < COLS-1 && g[row-1][col+1] == true {
+	if row > 0 && col < COLS-1 && grid[row-1][col+1] == true {
 		count++
 	}
 
 	// check east
-	if col < COLS-1 && g[row][col+1] == true {
+	if col < COLS-1 && grid[row][col+1] == true {
 		count++
 	}
 
 	// check south east
-	if row < ROWS-1 && col < COLS-1 && g[row+1][col+1] == true {
+	if row < ROWS-1 && col < COLS-1 && grid[row+1][col+1] == true {
 		count++
 	}
 
 	// check south
-	if row < ROWS-1 && g[row+1][col] == true {
+	if row < ROWS-1 && grid[row+1][col] == true {
 		count++
 	}
 
 	// check south west
-	if row < ROWS-1 && col > 0 && g[row+1][col-1] == true {
+	if row < ROWS-1 && col > 0 && grid[row+1][col-1] == true {
 		count++
 	}
 
 	// check west
-	if col > 0 && g[row][col-1] == true {
+	if col > 0 && grid[row][col-1] == true {
 		count++
 	}
 
 	return count
-
 }
 
-// Copy copies into a new grid the contents of the source.
+// copyInto copies into a new grid the contents of the source.
 // Used to generate next generation.
-func Copy(target [][]bool, source [][]bool) {
+func copyInto(target, source Grid) {
 	for r := 0; r < ROWS; r++ {
 		for c := 0; c < COLS; c++ {
 			target[r][c] = source[r][c]
@@ -90,30 +93,33 @@ func Copy(target [][]bool, source [][]bool) {
 
 // nextGeneration is the next iteration of the game
 // based on the rules of the Game.
-func (g Grid) nextGeneration() {
-	Copy(tempGrid, g)
+func (grid *Grid) nextGeneration(tempGrid *Grid) {
+	g := *grid
+	t := *tempGrid
+	copyInto(t, g)
 
 	for r := 0; r < ROWS; r++ {
 		for c := 0; c < COLS; c++ {
 			count := g.liveNeighbors(r, c)
 			// Rule 1 and 2
 			if g[r][c] == true && (count < 2 || count >= 4) {
-				tempGrid[r][c] = false
+				t[r][c] = false
 			}
 			// Rule 4
 			if g[r][c] == false && count == 3 {
-				tempGrid[r][c] = true
+				t[r][c] = true
 			}
 
 		}
 	}
-	Copy(g, tempGrid)
+	copyInto(g, t)
 }
 
-func consoleLog() {
+func render(grid *Grid) {
+	g := *grid
 	for r := 0; r < ROWS; r++ {
 		for c := 0; c < COLS; c++ {
-			if grid[r][c] == true {
+			if g[r][c] == true {
 				fmt.Print("o ")
 			} else {
 				fmt.Print("- ")
@@ -121,22 +127,27 @@ func consoleLog() {
 		}
 		fmt.Println()
 	}
-	fmt.Println("============")
+	for range COLS {
+		fmt.Print("==")
+	}
+	fmt.Println("")
 }
 
 func main() {
-	grid.initGrid(3, 3)
-	tempGrid.initGrid(3, 3)
+	grid := initGrid(ROWS, COLS)
+	tempGrid := initGrid(ROWS, COLS)
 
-	grid.makeAlive(0, 0)
-	grid.makeAlive(0, 2)
-	grid.makeAlive(1, 0)
-	grid.makeAlive(1, 1)
+	grid.makeAlive(0, 1)
+	grid.makeAlive(1, 2)
+	grid.makeAlive(2, 0)
+	grid.makeAlive(2, 1)
 	grid.makeAlive(2, 2)
-	consoleLog()
+
+	render(grid)
 
 	for generation := 0; generation < MAX_GENERATION; generation++ {
-		grid.nextGeneration()
-		consoleLog()
+		time.Sleep(500 * time.Millisecond)
+		grid.nextGeneration(tempGrid)
+		render(grid)
 	}
 }
